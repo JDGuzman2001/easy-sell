@@ -1,15 +1,24 @@
-import { createBrowserClient } from "@/supabase/client";
+// import { createBrowserClient } from "@/supabase/client";
+import { createClient } from "@/supabase/client";
 import Card from "@/components/card";
-import Image from "next/image";
-import { log } from "console";
+
+export const revalidate = 3600;
 
 export default async function Home() {
-  const supabase = createBrowserClient();
+  const supabase = createClient();
+
+  const {data: topProducts,  error: topProductsError} = await supabase.from("easysell-products").select().eq('boost', true);
+
   const {data: products,  error} = await supabase.from("easysell-products").select();
 
-  // console.log(products);
+
+  console.log(products);
 
   if (!products) {
+    return <p>Loading...</p>;
+  }
+
+  if (!topProducts) {
     return <p>Loading...</p>;
   }
 
@@ -22,9 +31,14 @@ export default async function Home() {
             <p className="text-xl">You can pay to boost your products here.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2 xl:gap-12">
-              {products.map((product) => (
-                <Card key={`${product.name}-${product.id}`} {...product} imageUrl={`${product.imageUrl}`}/>
+              {topProducts.map((product) => (
+                <Card key={`${product.name}-${product.id}`} {...product} 
+                //imageUrl={`${product.imageUrl}`}
+                imageUrl={product.imageUrl.startsWith('https') ? product.imageUrl : `${process.env.SUPABASE_URL}/storage/v1/object/public/storage/${product.imageUrl}`}
+                />
               ))}
+              
+
           </div>
         </div>
 
@@ -32,7 +46,10 @@ export default async function Home() {
         {products && products.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {products.map((product) => (
-              <Card key={`${product.name}-${product.id}`} {...product} imageUrl={`${product.imageUrl}`}/>
+              <Card key={`${product.name}-${product.id}`} {...product} 
+              //imageUrl={`${product.imageUrl}`}
+              imageUrl={product.imageUrl.startsWith('https') ? product.imageUrl : `${process.env.SUPABASE_URL}/storage/v1/object/public/storage/${product.imageUrl}`}
+              />
             ))}
           </div>
         ) : (
